@@ -27,6 +27,7 @@ def app():
     st.subheader('Closing Price vs Time chart')
     stock_data['Adj Close'].plot()
     fig = plt.figure(figsize=(12, 6))
+    plt.plot(stock_data.Adj Close)
     plt.ylabel("Adjusted Close Prices")
     st.pyplot(fig)
 
