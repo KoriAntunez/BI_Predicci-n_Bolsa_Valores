@@ -1,3 +1,2 @@
-# Model Random Forest
-
+# ModelLSTM
 Grupo 6
