@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas_datareader as data
 from tensorflow.keras.models import load_model
 import streamlit as st
-import talib
+#import talib
 
 
 def app():
