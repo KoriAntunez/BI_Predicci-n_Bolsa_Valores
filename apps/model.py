@@ -39,6 +39,7 @@ def app():
     plt.xlabel("Cambio porcentual de cierre ajustado de 1 día")
     st.pyplot(fig)
 
+    '''
     feature_names = []
     for n in [14, 30, 50, 200]:
         stock_data['ma' +
@@ -98,3 +99,4 @@ def app():
     plt.xlabel('Date')
     plt.legend()
     st.pyplot(fig2)
+'''
