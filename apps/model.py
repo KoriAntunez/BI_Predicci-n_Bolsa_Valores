@@ -37,7 +37,8 @@ def app():
 
     st.subheader('Cambio porcentual de cierre ajustado de 1 día')
     fig = plt.figure(figsize=(12, 6))
-    plt.hist(x, stock_data['Adj Close'], bins=50)
+    ma = stock_data['Adj Close'].pct_change().plot.hist(bins=50)
+    plt.hist(ma)
     plt.xlabel("Cambio porcentual de cierre ajustado de 1 día")
     st.pyplot(fig)
 
