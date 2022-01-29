@@ -1,2 +1,0 @@
-# ModelLSTM
-Grupo 6
