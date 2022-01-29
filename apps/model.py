@@ -4,91 +4,97 @@ import matplotlib.pyplot as plt
 import pandas_datareader as data
 from tensorflow.keras.models import load_model
 import streamlit as st
+import talib
 
 
 def app():
-    st.title('Model - LSTM')
+    st.title('Model - Random Forest')
 
-    #start = '2004-08-18'
-    #end = '2022-01-20'
-    start = st.date_input('Start', value=pd.to_datetime('2004-08-18'))
-    end = st.date_input('End', value=pd.to_datetime('today'))
+    start = '2004-08-18'
+    end = '2022-01-27'
 
     st.title('Predicción de tendencia de acciones')
 
     user_input = st.text_input('Introducir cotización bursátil', 'GOOG')
 
-    df = data.DataReader(user_input, 'yahoo', start, end)
+    stock_data = data.DataReader(user_input, 'yahoo', start, end)
 
     # Describiendo los datos
 
     st.subheader('Datos del 2004 al 2022')
-    st.write(df.describe())
+    st.write(stock_data.describe())
 
     # Visualizaciones
-
-    st.subheader('Closing Price vs Time chart')
+    st.subheader('Precio de cierre ajustado')
+    stock_data['Adj Close'].plot()
     fig = plt.figure(figsize=(12, 6))
-    plt.plot(df.Close)
+    plt.plot(stock_data['Adj Close'])
+    plt.ylabel("Adjusted Close Prices")
     st.pyplot(fig)
 
-    st.subheader('Closing Price vs Time chart con 100MA')
-    ma100 = df.Close.rolling(100).mean()
+    st.subheader('Cambio porcentual de cierre ajustado de 1 día')
     fig = plt.figure(figsize=(12, 6))
-    plt.plot(ma100)
-    plt.plot(df.Close)
+    plt.hist(stock_data['Adj Close'].pct_change(), bins=50)
+    plt.ylabel("Frecuencia")
+    plt.xlabel("Cambio porcentual de cierre ajustado de 1 día")
     st.pyplot(fig)
 
-    st.subheader('Closing Price vs Time chart con 100MA & 200MA')
-    ma100 = df.Close.rolling(100).mean()
-    ma200 = df.Close.rolling(200).mean()
-    fig = plt.figure(figsize=(12, 6))
-    plt.plot(ma100, 'r')
-    plt.plot(ma200, 'g')
-    plt.plot(df.Close, 'b')
-    st.pyplot(fig)
+    feature_names = []
+    for n in [14, 30, 50, 200]:
+        stock_data['ma' +
+                   str(n)] = talib.SMA(stock_data['Adj Close'].values, timeperiod=n)
+        stock_data['rsi' +
+                   str(n)] = talib.RSI(stock_data['Adj Close'].values, timeperiod=n)
 
-    # Splitting data into training and testing
+        feature_names = feature_names + ['ma' + str(n), 'rsi' + str(n)]
 
-    data_training = pd.DataFrame(df['Close'][0:int(len(df)*0.70)])
-    data_testing = pd.DataFrame(df['Close'][int(len(df)*0.70): int(len(df))])
+    stock_data['Volume_1d_change'] = stock_data['Volume'].pct_change()
 
-    from sklearn.preprocessing import MinMaxScaler
-    scaler = MinMaxScaler(feature_range=(0, 1))
+    volume_features = ['Volume_1d_change']
+    feature_names.extend(volume_features)
 
-    data_training_array = scaler.fit_transform(data_training)
+    stock_data['5d_future_close'] = stock_data['Adj Close'].shift(-5)
 
-    # Cargar mi modelo
+    stock_data['5d_close_future_pct'] = stock_data['5d_future_close'].pct_change(
+        5)
+    stock_data.dropna(inplace=True)
 
-    model = load_model('keras_model.h5')
+    X = stock_data[feature_names]
+    y = stock_data['5d_close_future_pct']
 
-    # Parte de prueba
+    train_size = int(0.85 * y.shape[0])
+    X_train = X[:train_size]
+    y_train = y[:train_size]
+    X_test = X[train_size:]
+    y_test = y[train_size:]
 
-    past_100_days = data_training.tail(100)
-    final_df = past_100_days.append(data_testing, ignore_index=True)
-    input_data = scaler.fit_transform(final_df)
+    grid = {'n_estimators': [200], 'max_depth': [3],
+            'max_features': [4, 8], 'random_state': [42]}
 
-    x_test = []
-    y_test = []
+    test_scores = []
 
-    for i in range(100, input_data.shape[0]):
-        x_test.append(input_data[i-100: i])
-        y_test.append(input_data[i, 0])
+    rf_model = RandomForestRegressor()
 
-    x_test, y_test = np.array(x_test), np.array(y_test)
-    y_predicted = model.predict(x_test)
-    scaler = scaler.scale_
+    for g in ParameterGrid(grid):
+        rf_model.set_params(**g)
+        rf_model.fit(X_train, y_train)
+        test_scores.append(rf_model.score(X_test, y_test))
 
-    scale_factor = 1/scaler[0]
-    y_predicted = y_predicted * scale_factor
-    y_test = y_test * scale_factor
+    best_index = np.argmax(test_scores)
 
-    # Grafico Final
-    st.subheader('Precio predecido vs Precio Original')
+    rf_model = RandomForestRegressor(
+        n_estimators=200, max_depth=3, max_features=4, random_state=42)
+
+    rf_model.fit(X_train, y_train)
+
+    y_pred = rf_model.predict(X_test)
+    st.subheader('Porcentaje de cambio de precio de cierre previsto de 5 días')
+    y_pred_series = pd.Series(y_pred, index=y_test.index)
     fig2 = plt.figure(figsize=(12, 6))
-    plt.plot(y_test, 'b', label='Precio Original')
-    plt.plot(y_predicted, 'r', label='Precio Predecido')
-    plt.xlabel('Tiempo')
-    plt.ylabel('Precio')
+    plt.plot(y_pred_series, 'r',
+             label='Porcentaje de cambio de precio de cierre previsto de 5 días')
+
+    plt.ylabel("Porcentaje de cambio de precio de cierre previsto de 5 días")
+    plt.xlabel('Date')
     plt.legend()
     st.pyplot(fig2)
