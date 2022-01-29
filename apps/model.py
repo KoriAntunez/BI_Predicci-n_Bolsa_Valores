@@ -35,13 +35,6 @@ def app():
    # plt.plot(stock_data.Close)
    # st.pyplot(fig)
 
-    st.subheader('Cambio porcentual de cierre ajustado de 1 día')
-    fig = plt.figure(figsize=(12, 6))
-    ma = stock_data['Adj Close'].pct_change().plot.hist(bins=50)
-    plt.hist(ma)
-    plt.xlabel("Cambio porcentual de cierre ajustado de 1 día")
-    st.pyplot(fig)
-
     #ma100 = stock_data.Close.rolling(100).mean()
 
     # plt.plot(ma100)
