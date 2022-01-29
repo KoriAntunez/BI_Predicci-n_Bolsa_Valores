@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pandas_datareader as data
 from tensorflow.keras.models import load_model
 import streamlit as st
+import talib
 
 
 def app():
@@ -30,10 +31,6 @@ def app():
     plt.plot(stock_data['Adj Close'])
     plt.ylabel("Adjusted Close Prices")
     st.pyplot(fig)
-
-   # fig = plt.figure(figsize=(12, 6))
-   # plt.plot(stock_data.Close)
-   # st.pyplot(fig)
 
     st.subheader('Cambio porcentual de cierre ajustado de 1 día')
     fig = plt.figure(figsize=(12, 6))
