@@ -7,10 +7,10 @@ import streamlit as st
 
 
 def app():
-    st.title('Model - LSTM')
+    st.title('Model - Random Forest')
 
     start = '2004-08-18'
-    end = '2022-01-20'
+    end = '2022-01-27'
 
     st.title('Predicción de tendencia de acciones')
 
@@ -24,7 +24,7 @@ def app():
     st.write(stock_data.describe())
 
     # Visualizaciones
-    st.subheader('Closing Price vs Time chart')
+    st.subheader('Precio de cierre ajustado')
     stock_data['Adj Close'].plot()
     fig = plt.figure(figsize=(12, 6))
     plt.plot(stock_data['Adj Close'])
@@ -35,12 +35,18 @@ def app():
    # plt.plot(stock_data.Close)
    # st.pyplot(fig)
 
-    st.subheader('Closing Price vs Time chart con 100MA')
-    ma100 = stock_data.Close.rolling(100).mean()
+    st.subheader('Cambio porcentual de cierre ajustado de 1 día')
+    stock_data['Adj Close'].pct_change().plot.hist(bins=50)
     fig = plt.figure(figsize=(12, 6))
-    plt.plot(ma100)
-    plt.plot(stock_data.Close)
+    plt.xlabel("Cambio porcentual de cierre ajustado de 1 día")
+    plt.plot(stock_data['Adj Close'].pct_change().plot.hist(bins=50))
     st.pyplot(fig)
+
+    #ma100 = stock_data.Close.rolling(100).mean()
+
+    # plt.plot(ma100)
+    # plt.plot(stock_data.Close)
+    # st.pyplot(fig)
 
     st.subheader('Closing Price vs Time chart con 100MA & 200MA')
     ma100 = stock_data.Close.rolling(100).mean()
